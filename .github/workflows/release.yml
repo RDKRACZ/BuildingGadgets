@@ -1,10 +1,9 @@
-name: Build & Create artifact
+name: Auto Release
 
 on:
   push:
-    branches: [ master ]
-  pull_request:
-    branches: [ master ]
+    tags:
+      - 'release/*'
 
 jobs:
   build:
@@ -28,17 +27,19 @@ jobs:
         run: |
           rm -f ~/.gradle/caches/modules-2/modules-2.lock
           rm -f ~/.gradle/caches/modules-2/gc.properties
-      - name: Build with Gradle
+      - name: Build & Publish to Github Maven
         run: |
           chmod +x ./gradlew
-          ./gradlew build --no-daemon
-      - name: Setting mod version
-        run: |
-          cat $GITHUB_WORKSPACE/gradle.properties | grep ^version= >> $GITHUB_ENV
-          cat $GITHUB_WORKSPACE/gradle.properties | grep ^minecraft_version= >> $GITHUB_ENV
-      - name: Create package name
-        run: echo "package_name=BuildingGadgets-$minecraft_version-$version-${{ github.head_ref || 'main' }}-SNAPSHOT-$GITHUB_RUN_NUMBER" >> $GITHUB_ENV
-      - uses: actions/upload-artifact@v2
+          ./gradlew build publish --no-daemon
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Release
+        env:
+          CURSE_TOKEN: ${{ secrets.CURSE_TOKEN }}
+        run: ./gradlew curseforge --no-daemon
+      - name: Release to Github
+        uses: softprops/action-gh-release@v1
         with:
-          name: ${{ env.package_name }}
-          path: build/libs
+          generate_release_notes: true
+          body_path: ./CHANGELOG.md
+          files: build/libs/*.jar

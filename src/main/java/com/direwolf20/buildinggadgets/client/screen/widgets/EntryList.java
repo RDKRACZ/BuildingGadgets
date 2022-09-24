@@ -1,4 +1,4 @@
-package com.direwolf20.buildinggadgets.client.screen.components;
+package com.direwolf20.buildinggadgets.client.screen.widgets;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.*;
@@ -49,7 +49,7 @@ public class EntryList<E extends Entry<E>> extends ObjectSelectionList<E> {
         int l = getTop() + 4 - (int) getScrollAmount();
         renderHeader(matrices, k, l, tessellator);
 
-        renderList(matrices, k, l, mouseX, mouseY, partialTicks);
+        renderList(matrices, k, l, partialTicks);
         RenderSystem.disableDepthTest();
 
         int j1 = getMaxScroll();

@@ -6,16 +6,19 @@ import com.google.common.base.Preconditions;
 import net.minecraft.MethodsReturnNonnullByDefault;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.Holder;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.Difficulty;
 import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.LightLayer;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.biome.BiomeManager;
 import net.minecraft.world.level.block.Block;
@@ -37,6 +40,7 @@ import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.storage.LevelData;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import net.minecraft.world.ticks.LevelTickAccess;
 import net.minecraftforge.api.distmarker.Dist;
@@ -77,6 +81,11 @@ public class MockDelegationWorld implements LevelAccessor {
 
     @Override
     public void levelEvent(@Nullable Player p_217378_1_, int p_217378_2_, BlockPos p_217378_3_, int p_217378_4_) {
+
+    }
+
+    @Override
+    public void gameEvent(GameEvent p_220404_, Vec3 p_220405_, GameEvent.Context p_220406_) {
 
     }
 
@@ -196,7 +205,7 @@ public class MockDelegationWorld implements LevelAccessor {
 
 
     @Override
-    public Random getRandom() {
+    public RandomSource getRandom() {
         return delegate.getRandom();
     }
 
@@ -218,13 +227,13 @@ public class MockDelegationWorld implements LevelAccessor {
     }
 
     @Override
-    public Biome getBiome(BlockPos pos) {
-        return delegate.getBiome(pos);
+    public Holder<Biome> getBiome(BlockPos p_204167_) {
+        return delegate.getBiome(p_204167_);
     }
 
     @Override
-    public Biome getUncachedNoiseBiome(int x, int y, int z) {
-        return null;
+    public Holder<Biome> getUncachedNoiseBiome(int p_204159_, int p_204160_, int p_204161_) {
+        return delegate.getUncachedNoiseBiome(p_204159_, p_204160_, p_204161_);
     }
 
     @Override
@@ -342,7 +351,7 @@ public class MockDelegationWorld implements LevelAccessor {
     @Override
     public boolean destroyBlock(BlockPos pos, boolean dropBlock) {
         // adapted from World
-        return ! this.getBlockState(pos).isAir() && removeBlock(pos, true);
+        return !this.getBlockState(pos).isAir() && removeBlock(pos, true);
     }
 
     @Override
@@ -393,8 +402,8 @@ public class MockDelegationWorld implements LevelAccessor {
     }
 
     @Override
-    public float getBrightness(BlockPos pos) {
-        return delegate.getBrightness(pos);
+    public int getBrightness(LightLayer p_45518_, BlockPos p_45519_) {
+        return delegate.getBrightness(p_45518_, p_45519_);
     }
 
     @Override
@@ -434,7 +443,7 @@ public class MockDelegationWorld implements LevelAccessor {
 
         public BlockInfo setState(BlockState state) {
             Preconditions.checkNotNull(state);
-            if (this.state.getBlock() != state.getBlock() || ! state.hasBlockEntity()) {
+            if (this.state.getBlock() != state.getBlock() || !state.hasBlockEntity()) {
                 onRemove();
             }
             this.state = state;
