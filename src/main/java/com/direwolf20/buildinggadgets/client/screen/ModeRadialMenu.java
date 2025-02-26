@@ -8,8 +8,8 @@ package com.direwolf20.buildinggadgets.client.screen;
 import com.direwolf20.buildinggadgets.client.KeyBindings;
 import com.direwolf20.buildinggadgets.client.OurSounds;
 import com.direwolf20.buildinggadgets.client.renderer.OurRenderTypes;
-import com.direwolf20.buildinggadgets.client.screen.components.GuiIconActionable;
-import com.direwolf20.buildinggadgets.client.screen.components.GuiSliderInt;
+import com.direwolf20.buildinggadgets.client.screen.widgets.GuiIconActionable;
+import com.direwolf20.buildinggadgets.client.screen.widgets.IncrementalSliderWidget;
 import com.direwolf20.buildinggadgets.common.config.Config;
 import com.direwolf20.buildinggadgets.common.items.*;
 import com.direwolf20.buildinggadgets.common.items.modes.BuildingModes;
@@ -28,7 +28,6 @@ import com.mojang.blaze3d.platform.InputConstants;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import com.mojang.math.Matrix4f;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.Button;
@@ -36,13 +35,13 @@ import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.network.chat.TextComponent;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.Mth;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.common.ForgeI18n;
+import org.joml.Matrix4f;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -53,8 +52,8 @@ import java.util.stream.Collectors;
 
 public class ModeRadialMenu extends Screen {
     private static final ImmutableList<ResourceLocation> signsCopyPaste = ImmutableList.of(
-        new ResourceLocation(Reference.MODID, "textures/gui/mode/copy.png"),
-        new ResourceLocation(Reference.MODID, "textures/gui/mode/paste.png")
+            new ResourceLocation(Reference.MODID, "textures/gui/mode/copy.png"),
+            new ResourceLocation(Reference.MODID, "textures/gui/mode/paste.png")
     );
     private final List<Button> conditionalButtons = new ArrayList<>();
     private int timeIn = 0;
@@ -62,7 +61,7 @@ public class ModeRadialMenu extends Screen {
     private int segments;
 
     public ModeRadialMenu(ItemStack stack) {
-        super(new TextComponent(""));
+        super(Component.literal(""));
 
         if (stack.getItem() instanceof AbstractGadget) {
             this.setSocketable(stack);
@@ -75,8 +74,8 @@ public class ModeRadialMenu extends Screen {
 
         float ang = (float) (Math.acos(baseVec.dot(mouseVec) / (baseVec.length() * mouseVec.length())) * (180F / Math.PI));
         return my < y
-            ? 360F - ang
-            : ang;
+                ? 360F - ang
+                : ang;
     }
 
     public void setSocketable(ItemStack stack) {
@@ -95,11 +94,11 @@ public class ModeRadialMenu extends Screen {
         ItemStack tool = this.getGadget();
         boolean isDestruction = tool.getItem() instanceof GadgetDestruction;
         ScreenPosition right = isDestruction
-            ? ScreenPosition.TOP
-            : ScreenPosition.RIGHT;
+                ? ScreenPosition.TOP
+                : ScreenPosition.RIGHT;
         ScreenPosition left = isDestruction
-            ? ScreenPosition.BOTTOM
-            : ScreenPosition.LEFT;
+                ? ScreenPosition.BOTTOM
+                : ScreenPosition.LEFT;
 
         if (isDestruction) {
             addRenderableWidget(new PositionedIconActionable(RadialTranslation.DESTRUCTION_OVERLAY, "destroy_overlay", right, send -> {
@@ -154,19 +153,20 @@ public class ModeRadialMenu extends Screen {
             }
             if (!isDestruction) {
                 int widthSlider = 82;
-                GuiSliderInt sliderRange = new GuiSliderInt(width / 2 - widthSlider / 2, height / 2 + 72, widthSlider, 14, GuiTranslation.SINGLE_RANGE.componentTranslation().append(new TextComponent(": ")), new TextComponent(""), 1, Config.GADGETS.maxRange.get(),
-                        GadgetUtils.getToolRange(tool), false, true, Color.DARK_GRAY, slider -> {
-                    GuiSliderInt sliderI = (GuiSliderInt) slider;
-                    this.sendRangeUpdate(sliderI.getValueInt());
-                }, (slider, amount) -> {
-                    int value = slider.getValueInt();
-                    int valueNew = Mth.clamp(value + amount, 1, Config.GADGETS.maxRange.get());
-                    sendRangeUpdate(valueNew);
-                    slider.setValue(valueNew);
-                    slider.updateSlider();
-                }
-                );
-                sliderRange.precision = 1;
+                IncrementalSliderWidget sliderRange = new IncrementalSliderWidget(width / 2 - widthSlider / 2, height / 2 + 72, widthSlider, 14, 1, Config.GADGETS.maxRange.get(), GuiTranslation.SINGLE_RANGE.componentTranslation().append(": "),  GadgetUtils.getToolRange(tool), slider -> {
+                    sendRangeUpdate(slider.getValueInt());
+                });
+//                        GadgetUtils.getToolRange(tool), false, true, Color.DARK_GRAY, slider -> {
+//                    GuiSliderInt sliderI = (GuiSliderInt) slider;
+//                    this.sendRangeUpdate(sliderI.getValueInt());
+//                }, (slider, amount) -> {
+//                    int value = slider.getValueInt();
+//                    int valueNew = Mth.clamp(value + amount, 1, Config.GADGETS.maxRange.get());
+//                    sendRangeUpdate(valueNew);
+//                    slider.setValue(valueNew);
+//                    slider.updateSlider();
+//                }
+//                );
                 sliderRange.getComponents().forEach(this::addRenderableWidget);
             }
         } else {
@@ -261,9 +261,9 @@ public class ModeRadialMenu extends Screen {
             button.setWidth(dim);
             button.setHeight(dim);
             if (isDestruction)
-                button.y = height / 2 + (isRight ? 10 : -button.getHeight() - 10);
+                button.setY(height / 2 + (isRight ? 10 : -button.getHeight() - 10));
             else
-                button.x = width / 2 + offset;
+                button.setX(width / 2 + offset);
         }
         posRight = resetPos(tool, padding, posRight);
         posLeft = resetPos(tool, padding, posLeft);
@@ -277,12 +277,12 @@ public class ModeRadialMenu extends Screen {
             }
             boolean isRight = button.position == right;
             int pos = isRight
-                ? posRight
-                : posLeft;
+                    ? posRight
+                    : posLeft;
             if (isDestruction) {
-                button.x = pos;
+                button.setX(pos);
             } else {
-                button.y = pos;
+                button.setY(pos);
             }
 
             if (isRight) {
@@ -295,8 +295,8 @@ public class ModeRadialMenu extends Screen {
 
     private int resetPos(ItemStack tool, int padding, int pos) {
         return tool.getItem() instanceof GadgetDestruction
-            ? this.width / 2 - (pos - padding) / 2
-            : this.height / 2 - (pos - padding) / 2;
+                ? this.width / 2 - (pos - padding) / 2
+                : this.height / 2 - (pos - padding) / 2;
     }
 
     private ItemStack getGadget() {
@@ -376,8 +376,8 @@ public class ModeRadialMenu extends Screen {
 
             float r = gs;
             float g = gs + (seg == modeIndex
-                ? 1F
-                : 0.0F);
+                    ? 1F
+                    : 0.0F);
             float b = gs;
             float a = 0.4F;
             if (mouseInSector) {
@@ -453,7 +453,7 @@ public class ModeRadialMenu extends Screen {
         stack.scale(s, s, s);
         matrices.popPose();
         stack.translate(x / s - (tool.getItem() instanceof GadgetCopyPaste ? 8 : 8.5), y / s - 8, 0);
-        this.itemRenderer.renderAndDecorateItem(tool, 0, 0);
+        this.itemRenderer.renderAndDecorateItem(stack, tool, 0, 0);
         stack.popPose();
     }
 
@@ -480,7 +480,7 @@ public class ModeRadialMenu extends Screen {
             getMinecraft().player.displayClientMessage(MessageTranslation.MODE_SET.componentTranslation(mode).setStyle(Styles.AQUA), true);
 
             PacketHandler.sendToServer(new PacketToggleMode(this.slotSelected));
-            OurSounds.BEEP.playSound();
+            OurSounds.playSound(OurSounds.BEEP.get());
         }
     }
 

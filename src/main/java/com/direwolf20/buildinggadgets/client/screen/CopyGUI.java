@@ -1,6 +1,6 @@
 package com.direwolf20.buildinggadgets.client.screen;
 
-import com.direwolf20.buildinggadgets.client.screen.components.GuiIncrementer;
+import com.direwolf20.buildinggadgets.client.screen.widgets.GuiIncrementer;
 import com.direwolf20.buildinggadgets.common.config.Config;
 import com.direwolf20.buildinggadgets.common.items.GadgetCopyPaste;
 import com.direwolf20.buildinggadgets.common.network.PacketHandler;
@@ -15,7 +15,6 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.resources.language.I18n;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.TextComponent;
 import net.minecraft.world.item.ItemStack;
 
 import java.util.ArrayList;
@@ -36,7 +35,7 @@ public class CopyGUI extends Screen {
     private List<GuiIncrementer> fields = new ArrayList<>();
 
     public CopyGUI(ItemStack tool) {
-        super(new TextComponent(""));
+        super(Component.literal(""));
         this.copyPasteTool = tool;
     }
 
@@ -82,7 +81,7 @@ public class CopyGUI extends Screen {
                 onClose();
             }));
 
-            if( Config.GENERAL.allowAbsoluteCoords.get() ) {
+            if (Config.GENERAL.allowAbsoluteCoords.get()) {
                 add(new CenteredButton(y + 20, 120, GuiTranslation.COPY_BUTTON_ABSOLUTE.componentTranslation(), (button) -> {
                     coordsModeSwitch();
                     updateTextFields();
@@ -157,15 +156,18 @@ public class CopyGUI extends Screen {
 
     static class CenteredButton extends Button {
         CenteredButton(int y, int width, Component text, OnPress onPress) {
-            super(0, y, width, 20, text, onPress);
+            super(builder(text, onPress)
+                    .pos(0, y)
+                    .size(width, 20)
+            );
         }
 
         static void centerButtonList(List<AbstractButton> buttons, int startX) {
             int collectiveWidth = buttons.stream().mapToInt(AbstractButton::getWidth).sum() + (buttons.size() - 1) * 5;
 
             int nextX = startX - collectiveWidth / 2;
-            for(AbstractButton button : buttons) {
-                button.x = nextX;
+            for (AbstractButton button : buttons) {
+                button.setX(nextX);
                 nextX += button.getWidth() + 5;
             }
         }

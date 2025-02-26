@@ -3,14 +3,15 @@ package com.direwolf20.buildinggadgets.common.containers;
 import com.direwolf20.buildinggadgets.common.tileentities.TemplateManagerTileEntity;
 import com.direwolf20.buildinggadgets.common.util.exceptions.CapabilityNotPresentException;
 import com.direwolf20.buildinggadgets.common.util.ref.Reference;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.entity.player.Inventory;
-import net.minecraft.world.inventory.Slot;
-import net.minecraft.world.item.ItemStack;
+import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.core.BlockPos;
-import net.minecraftforge.items.CapabilityItemHandler;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.InventoryMenu;
+import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.item.ItemStack;
+import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.SlotItemHandler;
 
@@ -18,8 +19,8 @@ import javax.annotation.Nonnull;
 import java.util.Objects;
 
 public class TemplateManagerContainer extends BaseContainer {
-    public static final String TEXTURE_LOC_SLOT_TOOL = Reference.MODID + ":gui/slot_copy_paste_gadget";
-    public static final String TEXTURE_LOC_SLOT_TEMPLATE = Reference.MODID + ":gui/slot_template";
+    public static final String TEXTURE_LOC_SLOT_TOOL = Reference.MODID + ":item/slot_copy_paste_gadget";
+    public static final String TEXTURE_LOC_SLOT_TEMPLATE = Reference.MODID + ":item/slot_template";
 
     private TemplateManagerTileEntity te;
 
@@ -46,7 +47,7 @@ public class TemplateManagerContainer extends BaseContainer {
     }
 
     private void addOwnSlots() {
-        IItemHandler itemHandler = this.getTe().getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY).orElseThrow(CapabilityNotPresentException::new);
+        IItemHandler itemHandler = this.getTe().getCapability(ForgeCapabilities.ITEM_HANDLER).orElseThrow(CapabilityNotPresentException::new);
         int x = 132;
         addSlot(new SlotTemplateManager(itemHandler, 0, x, 18, TEXTURE_LOC_SLOT_TOOL));
         addSlot(new SlotTemplateManager(itemHandler, 1, x, 63, TEXTURE_LOC_SLOT_TEMPLATE));
@@ -90,11 +91,7 @@ public class TemplateManagerContainer extends BaseContainer {
         public SlotTemplateManager(IItemHandler itemHandler, int index, int xPosition, int yPosition, String backgroundLoc) {
             super(itemHandler, index, xPosition, yPosition);
             this.backgroundLoc = backgroundLoc;
-        }
-
-        @Override
-        public Slot setBackground(ResourceLocation atlas, ResourceLocation sprite) {
-            return super.setBackground(atlas, new ResourceLocation(Reference.MODID, this.backgroundLoc));
+            this.setBackground(InventoryMenu.BLOCK_ATLAS, new ResourceLocation(this.backgroundLoc));
         }
 
         @Override

@@ -46,7 +46,6 @@ import net.minecraft.nbt.NbtUtils;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.Style;
-import net.minecraft.network.chat.TextComponent;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -64,9 +63,8 @@ import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult.Type;
+import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import net.minecraftforge.common.capabilities.ICapabilityProvider;
-import net.minecraftforge.energy.CapabilityEnergy;
-import net.minecraftforge.items.CapabilityItemHandler;
 import net.minecraftforge.network.PacketDistributor;
 
 import javax.annotation.Nullable;
@@ -301,7 +299,7 @@ public class GadgetCopyPaste extends AbstractGadget {
         addEnergyInformation(tooltip, stack);
 
         tooltip.add(TooltipTranslation.GADGET_MODE.componentTranslation(getToolMode(stack).translation.format()).setStyle(Styles.AQUA));
-        tooltip.add(new TextComponent("My renders don't really work yet, outlines for now :D").setStyle(Styles.GRAY));
+        tooltip.add(Component.literal("My renders don't really work yet, outlines for now :D").setStyle(Styles.GRAY));
 
         addInformationRayTraceFluid(tooltip, stack);
         GadgetUtils.addTooltipNameAndAuthor(stack, world, tooltip);
@@ -320,7 +318,7 @@ public class GadgetCopyPaste extends AbstractGadget {
 
         BlockHitResult posLookingAt = VectorHelper.getLookingAt(player, stack);
         BlockEntity tileEntity = world.getBlockEntity(posLookingAt.getBlockPos());
-        boolean lookingAtInventory = tileEntity != null && tileEntity.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY).isPresent();
+        boolean lookingAtInventory = tileEntity != null && tileEntity.getCapability(ForgeCapabilities.ITEM_HANDLER).isPresent();
 
         if (!world.isClientSide()) {
             if (player.isShiftKeyDown() && lookingAtInventory) {
@@ -411,7 +409,7 @@ public class GadgetCopyPaste extends AbstractGadget {
             Template newTemplate = new Template(map,
                     TemplateHeader.builder(region)
                             .name("Copy " + getAndIncrementCopyCounter(stack))
-                            .author(player.getName().getContents())
+                            .author(player.getName().getString())
                             .build());
             onCopyFinished(newTemplate.normalize(), stack, player);
         }, buildView, Config.GADGETS.GADGET_COPY_PASTE.copySteps.get());
@@ -466,11 +464,12 @@ public class GadgetCopyPaste extends AbstractGadget {
 
     private void schedulePlacement(ItemStack stack, IBuildView view, Player player) {
         IItemIndex index = InventoryHelper.index(stack, player);
-        int energyCost = getEnergyCost(stack);
+        // Disable energy cost when max energy is disabled
+        int energyCost = getEnergyMax() == 0 ? 0 : getEnergyCost(stack);
         boolean overwrite = Config.GENERAL.allowOverwriteBlocks.get();
         BlockPlaceContext useContext = new BlockPlaceContext(new UseOnContext(player, InteractionHand.MAIN_HAND, VectorHelper.getLookingAt(player, stack)));
         PlacementChecker checker = new PlacementChecker(
-                stack.getCapability(CapabilityEnergy.ENERGY),
+                stack.getCapability(ForgeCapabilities.ENERGY),
                 t -> energyCost,
                 index,
                 (c, t) -> overwrite ? c.getWorld().getBlockState(t.getPos()).canBeReplaced(useContext) : c.getWorld().isEmptyBlock(t.getPos()),

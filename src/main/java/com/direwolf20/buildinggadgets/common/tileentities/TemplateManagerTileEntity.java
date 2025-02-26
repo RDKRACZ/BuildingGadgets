@@ -7,11 +7,10 @@ import com.direwolf20.buildinggadgets.common.util.ref.Reference.ItemReference;
 import com.google.common.base.Preconditions;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.TextComponent;
-import net.minecraft.tags.ItemTags;
-import net.minecraft.tags.Tag;
+import net.minecraft.tags.TagKey;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
@@ -22,8 +21,8 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.common.capabilities.Capability;
+import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import net.minecraftforge.common.util.LazyOptional;
-import net.minecraftforge.items.CapabilityItemHandler;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.ItemStackHandler;
 
@@ -31,7 +30,7 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 public class TemplateManagerTileEntity extends BlockEntity implements MenuProvider {
-    public static final Tag.Named<Item> TEMPLATE_CONVERTIBLES = ItemTags.bind(ItemReference.TAG_TEMPLATE_CONVERTIBLE.toString());
+    public static final TagKey<Item> TEMPLATE_CONVERTIBLES = TagKey.create(Registries.ITEM, ItemReference.TAG_TEMPLATE_CONVERTIBLE);
 
     public static final int SIZE = 2;
 
@@ -60,7 +59,7 @@ public class TemplateManagerTileEntity extends BlockEntity implements MenuProvid
         @Override
         public boolean isItemValid(int slot, @Nonnull ItemStack stack) {
             return (slot == 0 && isTemplateStack(stack)) ||
-                    (slot == 1 && (isTemplateStack(stack) || TEMPLATE_CONVERTIBLES.contains(stack.getItem())));
+                    (slot == 1 && (isTemplateStack(stack) || stack.is(TEMPLATE_CONVERTIBLES)));
         }
     };
     private LazyOptional<IItemHandler> handlerOpt;
@@ -68,7 +67,7 @@ public class TemplateManagerTileEntity extends BlockEntity implements MenuProvid
     @Override
     @Nonnull
     public Component getDisplayName() {
-        return new TextComponent("Template Manager GUI");
+        return Component.literal("Template Manager GUI");
     }
 
     @Nullable
@@ -94,20 +93,20 @@ public class TemplateManagerTileEntity extends BlockEntity implements MenuProvid
 
     @Nonnull
     @Override
-    public CompoundTag save(CompoundTag compound) {
+    protected void saveAdditional(CompoundTag compound) {
         compound.put(NBTKeys.TE_TEMPLATE_MANAGER_ITEMS, itemStackHandler.serializeNBT());
-        return super.save(compound);
+        super.saveAdditional(compound);
     }
 
     public boolean canInteractWith(Player playerIn) {
         // If we are too far away (>4 blocks) from this tile entity you cannot use it
-        return ! isRemoved() && playerIn.distanceToSqr(Vec3.atLowerCornerOf(worldPosition).add(0.5D, 0.5D, 0.5D)) <= 64D;
+        return !isRemoved() && playerIn.distanceToSqr(Vec3.atLowerCornerOf(worldPosition).add(0.5D, 0.5D, 0.5D)) <= 64D;
     }
 
     @Nonnull
     @Override
     public <T> LazyOptional<T> getCapability(@Nonnull Capability<T> cap, final @Nullable Direction side) {
-        if (cap == CapabilityItemHandler.ITEM_HANDLER_CAPABILITY && handlerOpt != null)
+        if (cap == ForgeCapabilities.ITEM_HANDLER && handlerOpt != null)
             return handlerOpt.cast();
         return super.getCapability(cap, side);
     }

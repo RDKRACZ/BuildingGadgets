@@ -19,8 +19,6 @@ import com.google.common.collect.Maps;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.blaze3d.vertex.VertexFormat;
-import com.mojang.math.Matrix3f;
-import com.mojang.math.Matrix4f;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
@@ -29,7 +27,9 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.client.event.RenderLevelLastEvent;
+import net.minecraftforge.client.event.RenderLevelStageEvent;
+import org.joml.Matrix3f;
+import org.joml.Matrix4f;
 
 import java.io.Closeable;
 import java.util.*;
@@ -52,7 +52,7 @@ public class CopyPasteRender extends BaseRenderer implements IUpdateListener {
     }
 
     @Override
-    public void render(RenderLevelLastEvent evt, Player player, ItemStack heldItem) {
+    public void render(RenderLevelStageEvent evt, Player player, ItemStack heldItem) {
         // We can completely trust that heldItem isn't empty and that it's a copy paste gadget.
         super.render(evt, player, heldItem);
 
@@ -157,7 +157,6 @@ public class CopyPasteRender extends BaseRenderer implements IUpdateListener {
     }
 
     private void renderTargets(PoseStack matrix, Vec3 projectedView, BuildContext context, List<PlacementTarget> targets, BlockPos startPos, IBuildView view) {
-
         MultiBufferSource.BufferSource buffer = Minecraft.getInstance().renderBuffers().bufferSource();
         VertexConsumer builder = buffer.getBuffer(OurRenderTypes.lines());
 

@@ -1,6 +1,6 @@
 package com.direwolf20.buildinggadgets.client.screen;
 
-import com.direwolf20.buildinggadgets.client.screen.components.GuiSliderInt;
+import com.direwolf20.buildinggadgets.client.screen.widgets.IncrementalSliderWidget;
 import com.direwolf20.buildinggadgets.common.config.Config;
 import com.direwolf20.buildinggadgets.common.items.GadgetDestruction;
 import com.direwolf20.buildinggadgets.common.network.PacketHandler;
@@ -11,33 +11,32 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.network.chat.TextComponent;
-import net.minecraft.network.chat.TranslatableComponent;
-import net.minecraft.util.Mth;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 
 import javax.annotation.Nonnull;
-import java.awt.*;
 import java.util.HashSet;
 import java.util.Set;
 
 public class DestructionGUI extends Screen {
-    private final Set<GuiDestructionSlider> sliders = new HashSet<>();
-    private GuiDestructionSlider left;
-    private GuiDestructionSlider right;
-    private GuiDestructionSlider up;
-    private GuiDestructionSlider down;
-    private GuiDestructionSlider depth;
+    private final Set<IncrementalSliderWidget> sliders = new HashSet<>();
+
+    private IncrementalSliderWidget left;
+    private IncrementalSliderWidget right;
+    private IncrementalSliderWidget up;
+    private IncrementalSliderWidget down;
+    private IncrementalSliderWidget depth;
+
     private Button confirm;
 
     private String sizeString = "";
     private boolean isValidSize = true;
 
-    private final ItemStack destructionTool;
+    private final ItemStack destructionGadget;
 
     public DestructionGUI(ItemStack tool) {
-        super(new TextComponent("Destruction Gui?!?"));
-        this.destructionTool = tool;
+        super(Component.empty());
+        this.destructionGadget = tool;
     }
 
     @Override
@@ -47,7 +46,7 @@ public class DestructionGUI extends Screen {
         int x = width / 2;
         int y = height / 2;
 
-        this.addRenderableWidget(confirm = new Button((x - 30) + 32, y + 65, 60, 20, new TranslatableComponent(GuiMod.getLangKeySingle("confirm")), b -> {
+        this.addRenderableWidget(confirm = Button.builder(Component.translatable(GuiMod.getLangKeySingle("confirm")), b -> {
             if (Minecraft.getInstance().player == null) {
                 return;
             }
@@ -55,25 +54,39 @@ public class DestructionGUI extends Screen {
             if (isWithinBounds()) {
                 PacketHandler.sendToServer(new PacketDestructionGUI(left.getValueInt(), right.getValueInt(), up.getValueInt(), down.getValueInt(), depth.getValueInt()));
                 this.onClose();
-            }
-            else
+            } else
                 Minecraft.getInstance().player.displayClientMessage(MessageTranslation.DESTRCUT_TOO_LARGE.componentTranslation(Config.GADGETS.GADGET_DESTRUCTION.destroySize.get()), true);
-        }));
+        })
+                .pos((x - 30) + 32, y + 65)
+                .size(60, 20)
+                .build());
 
-        this.addRenderableWidget(new Button((x - 30) - 32, y + 65, 60, 20, new TranslatableComponent(GuiMod.getLangKeySingle("cancel")), b -> onClose()));
+        this.addRenderableWidget(Button.builder(Component.translatable(GuiMod.getLangKeySingle("cancel")), b -> onClose())
+                .pos((x - 30) - 32, y + 65)
+                .size(60, 20)
+                .build());
 
         sliders.clear();
-        sliders.add(depth   = new GuiDestructionSlider(x - (GuiDestructionSlider.width / 2), y - (GuiDestructionSlider.height / 2), GuiTranslation.SINGLE_DEPTH.format() + ":", GadgetDestruction.getToolValue(destructionTool, "depth")));
-        sliders.add(right   = new GuiDestructionSlider(x + (GuiDestructionSlider.width + 5), y - (GuiDestructionSlider.height / 2), GuiTranslation.SINGLE_RIGHT.format() + ":", GadgetDestruction.getToolValue(destructionTool, "right")));
-        sliders.add(left    = new GuiDestructionSlider(x - (GuiDestructionSlider.width * 2) - 5, y - (GuiDestructionSlider.height / 2), GuiTranslation.SINGLE_LEFT.format() + ":", GadgetDestruction.getToolValue(destructionTool, "left")));
-        sliders.add(up      = new GuiDestructionSlider(x - (GuiDestructionSlider.width / 2), y - 35, GuiTranslation.SINGLE_UP.format() + ":", GadgetDestruction.getToolValue(destructionTool, "up")));
-        sliders.add(down    = new GuiDestructionSlider(x - (GuiDestructionSlider.width / 2), y + 20, GuiTranslation.SINGLE_DOWN.format() + ":", GadgetDestruction.getToolValue(destructionTool, "down")));
+        sliders.add(depth = this.createSlider(x - (70 / 2), y - (14 / 2), GuiTranslation.SINGLE_DEPTH, GadgetDestruction.getToolValue(destructionGadget, "depth")));
+        sliders.add(right = this.createSlider(x + (70 + 5), y - (14 / 2), GuiTranslation.SINGLE_RIGHT, GadgetDestruction.getToolValue(destructionGadget, "right")));
+        sliders.add(left = this.createSlider(x - (70 * 2) - 5, y - (14 / 2), GuiTranslation.SINGLE_LEFT, GadgetDestruction.getToolValue(destructionGadget, "left")));
+        sliders.add(up = this.createSlider(x - (70 / 2), y - 35, GuiTranslation.SINGLE_UP, GadgetDestruction.getToolValue(destructionGadget, "up")));
+        sliders.add(down = this.createSlider(x - (70 / 2), y + 20, GuiTranslation.SINGLE_DOWN, GadgetDestruction.getToolValue(destructionGadget, "down")));
 
         updateSizeString();
         updateIsValid();
 
         // Adds their buttons to the gui
         sliders.forEach(gui -> gui.getComponents().forEach(this::addRenderableWidget));
+    }
+
+    public IncrementalSliderWidget createSlider(int x, int y, GuiTranslation prefix, int value) {
+        return new IncrementalSliderWidget(x, y, 70, 14, 0D, 16D, prefix.componentTranslation().append(": "), value, this::onSliderUpdate);
+    }
+
+    public void onSliderUpdate(IncrementalSliderWidget widget) {
+        this.updateSizeString();
+        this.updateIsValid();
     }
 
     private boolean isWithinBounds() {
@@ -86,15 +99,11 @@ public class DestructionGUI extends Screen {
     }
 
     private String getSizeString() {
-        int x = 1 + left.getValueInt() + right.getValueInt(),
-                y = 1 + up.getValueInt() + down.getValueInt(),
-                z = depth.getValueInt();
+        int x = 1 + left.getValueInt() + right.getValueInt();
+        int y = 1 + up.getValueInt() + down.getValueInt();
+        int z = depth.getValueInt();
 
-        return String.format("%d x %d x %d",
-                x,
-                y,
-                z
-        );
+        return String.format("%d x %d x %d", x, y, z);
     }
 
     private void updateIsValid() {
@@ -126,10 +135,7 @@ public class DestructionGUI extends Screen {
 
     @Override
     public boolean mouseReleased(double mouseX, double mouseY, int mouseButton) {
-        for (GuiDestructionSlider slider : sliders) {
-            slider.onRelease(mouseX, mouseY);
-        }
-        return true;
+        return super.mouseReleased(mouseX, mouseY, mouseButton);
     }
 
     @Override
@@ -137,30 +143,4 @@ public class DestructionGUI extends Screen {
         return false;
     }
 
-    // This is only done to reduce code dupe in this class.
-    private class GuiDestructionSlider extends GuiSliderInt {
-        public static final int width = 70;
-        public static final int height = 14;
-
-        private static final int min = 0;
-        private static final int max = 16;
-
-
-        GuiDestructionSlider(int x, int y, String prefix, int current) {
-            super(
-                    x, y, width, height, new TextComponent(String.format("%s ", prefix)), new TextComponent(""), min, max, current, false, true, Color.DARK_GRAY, null,
-                    (slider, amount) -> {
-                        slider.setValue(Mth.clamp(slider.getValueInt() + amount, min, max));
-                        slider.updateSlider();
-                    }
-            );
-        }
-
-        @Override
-        public void updateSlider() {
-            super.updateSlider();
-            DestructionGUI.this.updateSizeString();
-            DestructionGUI.this.updateIsValid();
-        }
-    }
 }

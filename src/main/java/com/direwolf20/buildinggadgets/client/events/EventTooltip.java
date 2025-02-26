@@ -13,7 +13,6 @@ import com.direwolf20.buildinggadgets.common.tainted.inventory.materials.objects
 import com.direwolf20.buildinggadgets.common.tainted.inventory.materials.objects.UniqueItem;
 import com.direwolf20.buildinggadgets.common.tainted.template.Template;
 import com.direwolf20.buildinggadgets.common.tainted.template.TemplateHeader;
-import com.direwolf20.buildinggadgets.common.util.ref.Reference;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMultiset;
 import com.google.common.collect.Multiset;
@@ -28,14 +27,11 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.ItemRenderer;
 import net.minecraft.world.inventory.tooltip.TooltipComponent;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.fml.common.Mod;
 import org.lwjgl.opengl.GL11;
 
 import java.util.Comparator;
 import java.util.List;
 
-@Mod.EventBusSubscriber(modid = Reference.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE, value = Dist.CLIENT)
 public class EventTooltip {
     private static final Comparator<Multiset.Entry<IUniqueObject<?>>> ENTRY_COMPARATOR = Comparator
             .<Multiset.Entry<IUniqueObject<?>>, Integer>comparing(Entry::getCount)
@@ -67,7 +63,7 @@ public class EventTooltip {
         }
 
         @Override
-        public void renderImage(Font font, int x, int y, PoseStack poseStack, ItemRenderer itemRenderer, int p_194053_) {
+        public void renderImage(Font font, int x, int y, PoseStack poseStack, ItemRenderer itemRenderer) {
             if (this.tooltipData.stack == null || !(this.tooltipData.stack.getItem() instanceof GadgetCopyPaste))
                 return;
 
@@ -159,13 +155,13 @@ public class EventTooltip {
 
         boolean hasReq = req > 0;
 
-        itemRenderer.renderAndDecorateItem(itemStack, x, y);
-        itemRenderer.renderGuiItemDecorations(mc.font, itemStack, x, y);
+        itemRenderer.renderAndDecorateItem(matrices, itemStack, x, y);
+        itemRenderer.renderGuiItemDecorations(matrices, mc.font, itemStack, x, y);
 
         MultiBufferSource.BufferSource irendertypebuffer$impl = Minecraft.getInstance().renderBuffers().bufferSource();
 
         matrices.pushPose();
-        matrices.translate(x + 8 - w1 / 4f, y + (hasReq ? 12 : 14), itemRenderer.blitOffset + 250);
+        matrices.translate(x + 8 - w1 / 4f, y + (hasReq ? 12 : 14), ItemRenderer.ITEM_COUNT_BLIT_OFFSET + 250);
         matrices.scale(.5f, .5f, 0);
         mc.font.draw(matrices, s1, 0, 0, 0xFFFFFF);
         matrices.popPose();
@@ -179,9 +175,9 @@ public class EventTooltip {
                 int w2 = mc.font.width(s2);
 
                 matrices.pushPose();
-                matrices.translate(x + 8 - w2 / 4f, y + 17, itemRenderer.blitOffset + 250);
+                matrices.translate(x + 8 - w2 / 4f, y + 17, ItemRenderer.ITEM_COUNT_BLIT_OFFSET + 250);
                 matrices.scale(.5f, .5f, 0);
-                mc.font.drawInBatch(s2, 0, 0, 0xFF0000, true, matrices.last().pose(), irendertypebuffer$impl, false, 0, 15728880);
+                mc.font.drawInBatch(s2, 0, 0, 0xFF0000, true, matrices.last().pose(), irendertypebuffer$impl, Font.DisplayMode.NORMAL, 0, 15728880);
                 matrices.popPose();
 
                 missingCount = (req - count);

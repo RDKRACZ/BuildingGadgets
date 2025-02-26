@@ -1,6 +1,5 @@
 package com.direwolf20.buildinggadgets.common.items;
 
-import com.direwolf20.buildinggadgets.common.BuildingGadgets;
 import com.direwolf20.buildinggadgets.common.blocks.OurBlocks;
 import com.direwolf20.buildinggadgets.common.config.Config;
 import com.direwolf20.buildinggadgets.common.util.ref.Reference;
@@ -21,15 +20,17 @@ public final class OurItems {
     public static final RegistryObject<Item> COPY_PASTE_GADGET_ITEM = ITEMS.register("gadget_copy_paste", GadgetCopyPaste::new);
     public static final RegistryObject<Item> DESTRUCTION_GADGET_ITEM = ITEMS.register("gadget_destruction", GadgetDestruction::new);
 
+
     // Construction Paste Containers
-    public static final RegistryObject<Item> PASTE_CONTAINER_T1_ITEM
-            = ITEMS.register("construction_paste_container_t1", () -> new ConstructionPasteContainer(false, Config.PASTE_CONTAINERS.capacityT1::get));
+    public static final RegistryObject<Item> PASTE_CONTAINER_T1_ITEM = ITEMS.register("construction_paste_container_t1", () -> new ConstructionPasteContainer(false, Config.PASTE_CONTAINERS.capacityT1::get));
+
     public static final RegistryObject<Item> PASTE_CONTAINER_T2_ITEM
             = ITEMS.register("construction_paste_container_t2", () -> new ConstructionPasteContainer(false, Config.PASTE_CONTAINERS.capacityT2::get));
     public static final RegistryObject<Item> PASTE_CONTAINER_T3_ITEM
             = ITEMS.register("construction_paste_container_t3", () -> new ConstructionPasteContainer(false, Config.PASTE_CONTAINERS.capacityT3::get));
     public static final RegistryObject<Item> PASTE_CONTAINER_CREATIVE_ITEM
             = ITEMS.register("construction_paste_container_creative", () -> new ConstructionPasteContainer(true));
+
 
     // Construction Paste
     public static final RegistryObject<Item> CONSTRUCTION_PASTE_ITEM = ITEMS.register("construction_paste", ConstructionPaste::new);
@@ -49,7 +50,7 @@ public final class OurItems {
             = ITEMS.register("template_manager", () -> new BlockItem(OurBlocks.TEMPLATE_MANGER_BLOCK.get(), OurItems.itemProperties()));
 
     public static Item.Properties itemProperties() {
-        return new Item.Properties().tab(BuildingGadgets.creativeTab);
+        return new Item.Properties();
     }
 
     public static Item.Properties nonStackableItemProperties() {

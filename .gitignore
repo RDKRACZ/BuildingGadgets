@@ -6,6 +6,7 @@
 
 # files
 !/.gitignore
+!/.github
 !/README.md
 !/CONTRIBUTION.md
 !/License.md
@@ -15,7 +16,9 @@
 !/gradlew.bat
 !/gradle.properties
 !/update.json
-!/CHANGELOG.md
+!/CHANGELOG-OLD.md
 !/SPEC.md
 !/EclipseCodeStyle.xml
 !/IntelliJIdeaCodeStyle.xml
+
+.DS_Store

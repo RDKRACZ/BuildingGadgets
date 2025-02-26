@@ -6,18 +6,18 @@ import com.direwolf20.buildinggadgets.common.tainted.inventory.InventoryHelper;
 import com.direwolf20.buildinggadgets.common.util.lang.Styles;
 import com.direwolf20.buildinggadgets.common.util.lang.TooltipTranslation;
 import com.direwolf20.buildinggadgets.common.util.ref.NBTKeys;
-import net.minecraft.world.item.TooltipFlag;
-import net.minecraft.world.entity.player.Player;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.world.InteractionResultHolder;
-import net.minecraft.world.InteractionResult;
-import net.minecraft.world.InteractionHand;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.TranslatableComponent;
+import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.Level;
 import net.minecraftforge.common.capabilities.ICapabilityProvider;
 
@@ -26,7 +26,7 @@ import java.util.List;
 import java.util.function.IntSupplier;
 
 public class ConstructionPasteContainer extends Item {
-    private static final ResourceLocation LEVEL = new ResourceLocation("level");
+    public static final ResourceLocation LEVEL = new ResourceLocation("level");
 
     private final IntSupplier maxCapacity;
     private final boolean isCreative;
@@ -36,13 +36,11 @@ public class ConstructionPasteContainer extends Item {
 
         this.isCreative = isCreative;
         this.maxCapacity = maxCapacity;
+    }
 
-        // This is used for setting up the texture change :D
-        // TODO ADD BACK 1.16
-//        addPropertyOverride(LEVEL, (stack, world, entity) -> {
-//            float percent = ConstructionPasteContainer.getPasteAmount(stack) / (float) this.maxCapacity.getAsInt();
-//            return MathHelper.floor(percent * 4) / 4F;
-//        });
+    @Override
+    public Object getRenderPropertiesInternal() {
+        return super.getRenderPropertiesInternal();
     }
 
     public ConstructionPasteContainer(boolean isCreative) {
@@ -88,7 +86,7 @@ public class ConstructionPasteContainer extends Item {
 
     @Override
     public void appendHoverText(ItemStack stack, @Nullable Level world, List<Component> list, TooltipFlag flag) {
-        TranslatableComponent key = isCreative
+        MutableComponent key = isCreative
                 ? TooltipTranslation.PASTECONTAINER_CREATIVE_AMOUNT.componentTranslation()
                 : TooltipTranslation.PASTECONTAINER_AMOUNT.componentTranslation(getPasteCount(stack), getMaxCapacity());
 
@@ -116,7 +114,15 @@ public class ConstructionPasteContainer extends Item {
         Item item = stack.getItem();
         if (item instanceof ConstructionPasteContainer)
             return ((ConstructionPasteContainer) item).getPasteCount(stack);
-        BuildingGadgets.LOG.warn("Potential abuse of ConstructionPasteContainer#getPasteAmount(ItemStack) where the given ItemStack does not contain a ConstructionPasteContainer.");
+
+        return 0;
+    }
+
+    public static int getMaxPasteAmount(ItemStack stack) {
+        Item item = stack.getItem();
+        if (item instanceof ConstructionPasteContainer)
+            return ((ConstructionPasteContainer) item).getMaxCapacity();
+
         return 0;
     }
 

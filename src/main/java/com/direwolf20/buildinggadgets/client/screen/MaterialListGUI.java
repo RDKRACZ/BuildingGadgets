@@ -20,7 +20,6 @@ import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.TranslatableComponent;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.common.util.LazyOptional;
@@ -81,18 +80,28 @@ public class MaterialListGUI extends Screen implements ITemplateProvider.IUpdate
         this.addRenderableWidget(scrollingList);
 
         int buttonY = getWindowBottomY() - (ScrollingMaterialList.BOTTOM / 2 + BUTTON_HEIGHT / 2);
-        this.buttonClose = new Button(0, buttonY, 0, BUTTON_HEIGHT, MaterialListTranslation.BUTTON_CLOSE.componentTranslation(), b -> getMinecraft().player.closeContainer());
-        this.buttonSortingModes = new Button(0, buttonY, 0, BUTTON_HEIGHT, scrollingList.getSortingMode().getTranslationProvider().componentTranslation(), (button) -> {
+        this.buttonClose = Button.builder(MaterialListTranslation.BUTTON_CLOSE.componentTranslation(), b -> getMinecraft().player.closeContainer())
+                .pos(0, buttonY)
+                .size( 0, BUTTON_HEIGHT)
+                .build();
+
+        this.buttonSortingModes = Button.builder(scrollingList.getSortingMode().getTranslationProvider().componentTranslation(), (button) -> {
             scrollingList.setSortingMode(scrollingList.getSortingMode().next());
             buttonSortingModes.setMessage(scrollingList.getSortingMode().getTranslationProvider().componentTranslation());
-        });
+        })
+                .pos(0, buttonY)
+                .size(0, BUTTON_HEIGHT)
+                .build();
 
-        this.buttonCopyList = new Button(0, buttonY, 0, BUTTON_HEIGHT, MaterialListTranslation.BUTTON_COPY.componentTranslation(), (button) -> {
+        this.buttonCopyList = Button.builder(MaterialListTranslation.BUTTON_COPY.componentTranslation(), (button) -> {
             getMinecraft().keyboardHandler.setClipboard(evaluateTemplateHeader().toJson(false, hasControlDown()));
 
-            if( getMinecraft().player != null )
-                getMinecraft().player.displayClientMessage(new TranslatableComponent(MaterialListTranslation.MESSAGE_COPY_SUCCESS.getTranslationKey()), true);
-        });
+            if (getMinecraft().player != null)
+                getMinecraft().player.displayClientMessage(Component.translatable(MaterialListTranslation.MESSAGE_COPY_SUCCESS.getTranslationKey()), true);
+        })
+                .pos(0, buttonY)
+                .size(0, BUTTON_HEIGHT)
+                .build();
 
         // Buttons will be placed left to right in this order
         this.addRenderableWidget(buttonSortingModes);
@@ -151,14 +160,14 @@ public class MaterialListGUI extends Screen implements ITemplateProvider.IUpdate
         for (GuiEventListener widget : children()) {
             if (widget instanceof Button btn) {
                 btn.setWidth(buttonWidth);
-                btn.x = nextX;
+                btn.setX(nextX);
                 nextX += buttonWidth + BUTTONS_PADDING;
             }
         }
     }
 
     public Template getTemplateCapability() {
-        if( getMinecraft().level == null || getMinecraft().player == null )
+        if (getMinecraft().level == null || getMinecraft().player == null)
             return null;
 
         LazyOptional<ITemplateProvider> providerCap = getMinecraft().level.getCapability(CapabilityTemplate.TEMPLATE_PROVIDER_CAPABILITY);
@@ -260,14 +269,12 @@ public class MaterialListGUI extends Screen implements ITemplateProvider.IUpdate
     public static void renderTextVerticalCenter(PoseStack matrices, String text, int leftX, int top, int bottom, int color) {
         Font fontRenderer = Minecraft.getInstance().font;
         int y = getYForAlignedCenter(top, bottom, fontRenderer.lineHeight);
-        RenderSystem.enableTexture();
         fontRenderer.draw(matrices, text, leftX, y, color);
     }
 
     public static void renderTextHorizontalRight(PoseStack matrices, String text, int right, int y, int color) {
         Font fontRenderer = Minecraft.getInstance().font;
         int x = getXForAlignedRight(right, fontRenderer.width(text));
-        RenderSystem.enableTexture();
         fontRenderer.draw(matrices, text, x, y, color);
     }
 

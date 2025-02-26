@@ -10,7 +10,6 @@ import com.google.common.collect.Multiset;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import com.mojang.math.Matrix4f;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.core.BlockPos;
@@ -23,11 +22,12 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.client.event.RenderLevelLastEvent;
+import net.minecraftforge.client.event.RenderLevelStageEvent;
+import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import net.minecraftforge.common.util.LazyOptional;
-import net.minecraftforge.energy.CapabilityEnergy;
 import net.minecraftforge.energy.IEnergyStorage;
 import org.apache.commons.lang3.tuple.Pair;
+import org.joml.Matrix4f;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -41,7 +41,12 @@ public abstract class BaseRenderer {
 
     private static final RemoteInventoryCache cacheInventory = new RemoteInventoryCache(false);
 
-    public void render(RenderLevelLastEvent evt, Player player, ItemStack heldItem) {
+    public void render(RenderLevelStageEvent evt, Player player, ItemStack heldItem) {
+        // FIXME: might be wrong
+        if (evt.getStage() != RenderLevelStageEvent.Stage.AFTER_TRANSLUCENT_BLOCKS) {
+            return;
+        }
+
         // This is necessary to prevent issues with not rendering the overlay's at all (when Botania being present) - See #329 for more information
         bindBlocks();
 
@@ -53,7 +58,7 @@ public abstract class BaseRenderer {
         RenderSystem.setShaderTexture(0, InventoryMenu.BLOCK_ATLAS);
     }
 
-    private static void renderLinkedInventoryOutline(RenderLevelLastEvent evt, ItemStack item, Player player) {
+    private static void renderLinkedInventoryOutline(RenderLevelStageEvent evt, ItemStack item, Player player) {
         Pair<BlockPos, ResourceKey<Level>> dataFromStack = InventoryLinker.getDataFromStack(item);
         if (dataFromStack == null) {
             return;
@@ -84,7 +89,7 @@ public abstract class BaseRenderer {
 
 
     int getEnergy(Player player, ItemStack heldItem) {
-        LazyOptional<IEnergyStorage> energy = heldItem.getCapability(CapabilityEnergy.ENERGY);
+        LazyOptional<IEnergyStorage> energy = heldItem.getCapability(ForgeCapabilities.ENERGY);
         if (player.isCreative() || !energy.isPresent())
             return Integer.MAX_VALUE;
 

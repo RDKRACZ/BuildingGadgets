@@ -22,16 +22,15 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Multiset;
 import com.google.common.collect.Multiset.Entry;
 import com.google.common.collect.Multisets;
-import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.*;
-import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Tuple;
-import net.minecraft.core.BlockPos;
-import net.minecraft.core.Registry;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -50,7 +49,7 @@ public final class Undo {
                 (ListTag) nbt.get(NBTKeys.WORLD_SAVE_UNDO_DATA_SERIALIZER_LIST),
                 inbt -> {
                     String s = inbt.getAsString();
-                    ITileDataSerializer serializer = RegistryUtils.getFromString(Registries.TileEntityData.getTileDataSerializers(), s);
+                    ITileDataSerializer serializer = RegistryUtils.getFromString(Registries.TILE_DATA_SERIALIZER_REGISTRY.get(), s);
                     if (serializer == null) {
                         BuildingGadgets.LOG.warn("Found unknown serializer {}. Replacing with dummy!", s);
                         serializer = TileSupport.dummyTileEntityData().getSerializer();
@@ -69,7 +68,7 @@ public final class Undo {
                 (ListTag) nbt.get(NBTKeys.WORLD_SAVE_UNDO_ITEMS_SERIALIZER_LIST),
                 inbt -> {
                     String s = inbt.getAsString();
-                    IUniqueObjectSerializer serializer = RegistryUtils.getFromString(Registries.getUniqueObjectSerializers(), s);
+                    IUniqueObjectSerializer serializer = RegistryUtils.getFromString(Registries.UNIQUE_DATA_SERIALIZER_REGISTRY.get(), s);
                     if (serializer == null)
                         return SerialisationSupport.uniqueItemSerializer();
                     return serializer;
@@ -87,7 +86,7 @@ public final class Undo {
                 inbt -> NbtUtils.readBlockPos((CompoundTag) inbt),
                 inbt -> BlockInfo.deserialize((CompoundTag) inbt, dataReverseObjectIncrementer, itemSetReverseObjectIncrementer));
 
-        ResourceKey<Level> dim = ResourceKey.create(Registry.DIMENSION_REGISTRY, new ResourceLocation(nbt.getString(NBTKeys.WORLD_SAVE_DIM)));
+        ResourceKey<Level> dim = ResourceKey.create(net.minecraft.core.registries.Registries.DIMENSION, new ResourceLocation(nbt.getString(NBTKeys.WORLD_SAVE_DIM)));
         Region bounds = Region.deserializeFrom(nbt.getCompound(NBTKeys.WORLD_SAVE_UNDO_BOUNDS));
         return new Undo(dim, map, bounds);
     }
@@ -132,10 +131,10 @@ public final class Undo {
         ListTag infoList = NBTHelper.serializeMap(dataMap, NbtUtils::writeBlockPos, i -> i.serialize(dataObjectIncrementer, itemObjectIncrementer));
         ListTag dataList = dataObjectIncrementer.write(d -> d.serialize(serializerObjectIncrementer, true));
         ListTag itemSetList = itemObjectIncrementer.write(ms -> NBTHelper.writeIterable(ms.entrySet(), entry -> writeEntry(entry, itemSerializerIncrementer)));
-        ListTag dataSerializerList = serializerObjectIncrementer.write(ts -> StringTag.valueOf(ts.getRegistryName().toString()));
-        ListTag itemSerializerList = itemSerializerIncrementer.write(s -> StringTag.valueOf(s.getRegistryName().toString()));
+        ListTag dataSerializerList = serializerObjectIncrementer.write(ts -> StringTag.valueOf(Registries.TILE_DATA_SERIALIZER_REGISTRY.get().getKey(ts).toString()));
+        ListTag itemSerializerList = itemSerializerIncrementer.write(s -> StringTag.valueOf(Registries.UNIQUE_DATA_SERIALIZER_REGISTRY.get().getKey(s).toString()));
 
-        res.putString(NBTKeys.WORLD_SAVE_DIM, dim.getRegistryName().toString());
+        res.putString(NBTKeys.WORLD_SAVE_DIM, dim.location().toString());
         res.put(NBTKeys.WORLD_SAVE_UNDO_BLOCK_LIST, infoList);
         res.put(NBTKeys.WORLD_SAVE_UNDO_DATA_LIST, dataList);
         res.put(NBTKeys.WORLD_SAVE_UNDO_DATA_SERIALIZER_LIST, dataSerializerList);

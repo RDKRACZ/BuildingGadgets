@@ -8,9 +8,10 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.Connection;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraftforge.client.model.data.IModelData;
-import net.minecraftforge.client.model.data.ModelDataMap;
+import net.minecraftforge.client.model.data.ModelData;
+import net.minecraftforge.client.model.data.ModelDataManager;
 import net.minecraftforge.client.model.data.ModelProperty;
+import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nonnull;
 
@@ -29,15 +30,14 @@ public class ConstructionBlockTileEntity extends BlockEntity {
     }
 
     // TODO: query simulated Tile, if exists, and relay model data...
-    @Nonnull
     @Override
-    public IModelData getModelData() {
+    public @NotNull ModelData getModelData() {
         if (blockState == null) {
             return super.getModelData();
         }
 
         BlockState state = blockState.getState();
-        return new ModelDataMap.Builder().withInitial(FACADE_STATE, state).build();
+        return ModelData.builder().with(FACADE_STATE, state).build();
     }
 
     @Nonnull
@@ -62,11 +62,11 @@ public class ConstructionBlockTileEntity extends BlockEntity {
 
     @Nonnull
     @Override
-    public CompoundTag save(@Nonnull CompoundTag compound) {
+    protected void saveAdditional(CompoundTag compound) {
         if (blockState != null) {
             compound.put(NBTKeys.TE_CONSTRUCTION_STATE, blockState.serialize(true));
         }
-        return super.save(compound);
+        super.saveAdditional(compound);
     }
 
     private void markDirtyClient() {
@@ -81,14 +81,14 @@ public class ConstructionBlockTileEntity extends BlockEntity {
     @Override
     public CompoundTag getUpdateTag() {
         CompoundTag updateTag = super.getUpdateTag();
-        save(updateTag);
+        saveAdditional(updateTag);
         return updateTag;
     }
 
     @Override
     public ClientboundBlockEntityDataPacket getUpdatePacket() {
         CompoundTag nbtTag = new CompoundTag();
-        save(nbtTag);
+        saveAdditional(nbtTag);
         return ClientboundBlockEntityDataPacket.create(this);
     }
 

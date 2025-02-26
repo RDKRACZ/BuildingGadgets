@@ -2,6 +2,7 @@ package com.direwolf20.buildinggadgets.common.util;
 
 import com.direwolf20.buildinggadgets.common.blocks.EffectBlock;
 import com.direwolf20.buildinggadgets.common.capability.CapabilityTemplate;
+import com.direwolf20.buildinggadgets.common.config.Config;
 import com.direwolf20.buildinggadgets.common.items.AbstractGadget;
 import com.direwolf20.buildinggadgets.common.items.GadgetBuilding;
 import com.direwolf20.buildinggadgets.common.items.GadgetExchanger;
@@ -42,8 +43,8 @@ import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
+import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import net.minecraftforge.common.util.LazyOptional;
-import net.minecraftforge.items.CapabilityItemHandler;
 import net.minecraftforge.items.IItemHandler;
 
 import javax.annotation.Nonnull;
@@ -129,7 +130,7 @@ public class GadgetUtils {
 
     public static int getToolRange(ItemStack stack) {
         CompoundTag tagCompound = stack.getOrCreateTag();
-        return Mth.clamp(tagCompound.getInt("range"), 1, 15);
+        return Mth.clamp(tagCompound.getInt("range"), 1, Config.GADGETS.maxRange.get());
     }
 
     public static BlockData rotateOrMirrorBlock(Player player, PacketRotateMirror.Operation operation, BlockData data) {
@@ -184,7 +185,7 @@ public class GadgetUtils {
             return InteractionResultHolder.fail(Blocks.AIR);
 
         BlockState state = world.getBlockState(lookingAt.getBlockPos());
-        if (!((AbstractGadget) stack.getItem()).isAllowedBlock(state.getBlock()) || state.getBlock() instanceof EffectBlock)
+        if (!((AbstractGadget) stack.getItem()).isAllowedBlock(state) || state.getBlock() instanceof EffectBlock)
             return InteractionResultHolder.fail(state.getBlock());
 
         if (DISALLOWED_BLOCKS.contains(state.getBlock())) {
@@ -197,8 +198,7 @@ public class GadgetUtils {
 
         Optional<BlockData> data = InventoryHelper.getSafeBlockData(player, lookingAt.getBlockPos(), player.getUsedItemHand());
         data.ifPresent(placeState -> {
-            BlockState actualState = placeState.getState(); //.getExtendedState(world, lookingAt.getPos()); 1.14 @todo: fix?
-
+            BlockState actualState = placeState.getState();
             setToolBlock(stack, new BlockData(actualState, placeState.getTileData()));
         });
 
@@ -239,7 +239,7 @@ public class GadgetUtils {
             return false;
 
         BlockData blockData = getToolBlock(stack);
-        AbstractMode.UseContext context = new AbstractMode.UseContext(player.level, blockData.getState(), startBlock, stack, sideHit, stack.getItem() instanceof GadgetBuilding && GadgetBuilding.shouldPlaceAtop(stack), stack.getItem() instanceof GadgetBuilding ? GadgetBuilding.getConnectedArea(stack) : GadgetExchanger.getConnectedArea(stack));
+        AbstractMode.UseContext context = new AbstractMode.UseContext(player.level, player, blockData.getState(), startBlock, stack, sideHit, stack.getItem() instanceof GadgetBuilding && GadgetBuilding.shouldPlaceAtop(stack), stack.getItem() instanceof GadgetBuilding ? GadgetBuilding.getConnectedArea(stack) : GadgetExchanger.getConnectedArea(stack));
 
         List<BlockPos> coords = stack.getItem() instanceof GadgetBuilding
                 ? GadgetBuilding.getToolMode(stack).getMode().getCollection(context, player)
@@ -305,7 +305,7 @@ public class GadgetUtils {
     public static void dropTileEntityInventory(Level world, BlockPos pos) {
         BlockEntity tileEntity = world.getBlockEntity(pos);
         if (tileEntity != null) {
-            LazyOptional<IItemHandler> cap = tileEntity.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY);
+            LazyOptional<IItemHandler> cap = tileEntity.getCapability(ForgeCapabilities.ITEM_HANDLER);
             cap.ifPresent(handler -> {
                 for (int i = 0; i < handler.getSlots(); i++) {
                     net.minecraft.world.Containers.dropItemStack(world, pos.getX(), pos.getY(), pos.getZ(), handler.getStackInSlot(i));
